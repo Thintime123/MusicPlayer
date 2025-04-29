@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "array": "cpp",
+        "bitset": "cpp",
+        "string_view": "cpp",
+        "initializer_list": "cpp",
+        "span": "cpp",
+        "atomic": "cpp",
+        "format": "cpp",
+        "chrono": "cpp",
+        "text_encoding": "cpp",
+        "typeinfo": "cpp"
+    }
+}
