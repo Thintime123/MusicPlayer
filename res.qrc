@@ -8,6 +8,10 @@
         <file>res/Icon/Play.png</file>
         <file>res/Icon/Prev.png</file>
         <file>res/Icon/Random.png</file>
-        <file>res/Background/Sky.png</file>
+        <file>res/Lyrics/唯一-G.E.M.邓紫棋-歌词.lrc</file>
+        <file>res/Lyrics/句号-G.E.M.邓紫棋-歌词.lrc</file>
+        <file>res/Audio/句号.mp3</file>
+        <file>res/Background/bkgd.png</file>
+        <file>res/Audio/唯一.mp3</file>
     </qresource>
 </RCC>

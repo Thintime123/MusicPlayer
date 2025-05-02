@@ -4,6 +4,10 @@
 #include <QMainWindow>
 #include <QString>
 #include <QPushButton>
+#include <QMediaPlayer>
+#include <QAudioOutput>
+#include <QFileDialog>
+#include <QList>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -20,9 +24,25 @@ public:
     ~MainWindow();
 
 private:
+    void initButton();
+    void setBackGround(const QString &filename);
+
+    void playAndPause();
+    void selectFile();
+
+    void loadMusicList(const QString basePath, bool recursive);
+
+    void playPreview();
+    void playNext();
+
+private:
     Ui::MainWindow *ui;
-    void InitButton();
-    void SetBackGround(const QString &filename);
+    QMediaPlayer *player; // 媒体播放器对象
+    QAudioOutput *audioOutput; // 音频输出对象
+    QString filePath;   // 正要播放的音频文件路径
+
+    QList<QUrl> musicList; // 音乐列表
+    int musicCurIndex = 0; // 当前音乐索引
 
 };
 #endif // MAINWINDOW_H
