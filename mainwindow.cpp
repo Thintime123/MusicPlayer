@@ -15,12 +15,16 @@ MainWindow::MainWindow(QWidget *parent)
     qDebug() << "\n\nstart*******************\n\n";
     player = new QMediaPlayer(this); // 初始化媒体播放器对象
     audioOutput = new QAudioOutput(this); // 初始化音频输出对象
+    //videoWidget = new QVideoWidget(this); // 初始化视频输出对象
+    //videoWidget->setMinimumSize(800, 600); // 设置视频输出对象的最小大小
+
     player->setAudioOutput(audioOutput); // 设置音频输出对象
+    //player->setVideoOutput(videoWidget); // 设置视频输出对象
 
     musicCurIndex = 0;
-    loadMusicList("res/Audio/", true); // 加载音乐列表
+    basePath = ":/res/Audio";
 
-    qDebug() << musicList.size();
+    loadMusicList(basePath, true); // 加载音乐列表
 
     setWindowTitle("Music Player");
     initButton();
@@ -91,21 +95,50 @@ void MainWindow::setBackGround(const QString &filename)
 
 }
 
+
+QUrl convertToQrcUrl(const QUrl &fileUrl) {
+    if (fileUrl.scheme() == "file" && fileUrl.toString().startsWith("file::")) {
+        // 获取资源路径部分（去掉 file:: 前缀）
+        QString path = fileUrl.toString().mid(6); // "file::".length() = 6
+
+        return QUrl("qrc:" + path);
+    }
+    return fileUrl;
+}
+
+void MainWindow::playCurrentMusic() {
+    qDebug() << "\nplayCurrentMusic called!";
+
+    if(musicCurIndex >= 0 && musicCurIndex < musicList.size()) {
+        qDebug() << "Playing music:" << musicList[musicCurIndex];
+
+        qDebug() << "Player state(last):" << player->playbackState();
+
+        player->setSource(convertToQrcUrl(musicList[musicCurIndex]));
+        player->play();
+        ui->PlayAndPauseBtn->setIcon(QIcon(":/res/Icon/Pause.png"));
+    } else {
+        qDebug() << "Invalid music index:" << musicCurIndex;
+    }
+}
+
 void MainWindow::playAndPause()
 {
+    qDebug() << "playAndPause called!";
     // 如果播放器正在播放，则暂停
     if (player->playbackState() == QMediaPlayer::PlayingState) {
         player->pause();
         ui->PlayAndPauseBtn->setIcon(QIcon(":/res/Icon/Play.png"));
     } else {
         // 否则，开始播放
-        //player->setSource(QUrl("qrc:/res/Audio/M800001ziKgJ3o5Ipp.mp3")); // 设置音乐文件路径
-        if(filePath.isEmpty()) qDebug() << "The filePath is unvalid!";
-        else {
+        if(player->playbackState() == QMediaPlayer::StoppedState) {
+            playCurrentMusic();
+        } else if(player->playbackState() == QMediaPlayer::PausedState){
             player->play();
             ui->PlayAndPauseBtn->setIcon(QIcon(":/res/Icon/Pause.png"));
         }
     }
+    qDebug() << "Player state:" << player->playbackState();
 }
 
 void MainWindow::selectFile()
@@ -118,9 +151,40 @@ void MainWindow::selectFile()
         "Audio files(*.mp3 *wav *.flac *.ogg);;All files(*)"
     );
 
-    if(filePath_1.isEmpty()) qDebug() << "The filePath is unvalid!";
+    if(filePath_1.isEmpty()) qDebug() << "The filePath is invalid!";
     else {
         filePath = filePath_1;
+        qDebug() << "Selected file:" << filePath;
+
+        QString baseDir = basePath; // 基础目录（相对路径）
+        QDir dir("../../");
+
+        QString baseDirAbs = dir.absolutePath(); // 基础目录（绝对路径）
+        QDir dirAbs(baseDirAbs);
+
+        qDebug() << "基础目录相对路径baseDir: " << baseDir;
+        qDebug() << "基础目录绝对路径baseDirAbs: " << baseDirAbs;
+
+        QString relativePath = dirAbs.relativeFilePath(filePath);
+
+        qDebug() << "relativePath:" << relativePath;
+
+        int foundIndex = -1;
+
+        for(int i = 0; i < musicList.size(); i++) {
+            QString temp = musicList[i].path();
+            //qDebug() << "temp_:" << temp;
+            if(temp.startsWith(":/")) {
+                temp = temp.mid(2); // 去掉前缀
+            }
+            qDebug() << "temp:" << temp;
+            if(temp == relativePath) {
+                foundIndex = i;
+                break;
+            }
+        }
+        qDebug() << "找到相对路径:" << relativePath << "在musicList中的索引为:" << foundIndex;
+
         player->setSource(QUrl(filePath));
         player->play();
         ui->PlayAndPauseBtn->setIcon(QIcon(":/res/Icon/Pause.png"));
@@ -160,15 +224,15 @@ void MainWindow::loadMusicList(const QString basePath, bool recursive)
     for (int i = 0; i < fileList.size(); i++) {
         QFileInfo fileInfo = fileList[i];
         if (fileInfo.isFile()) {
-            QString filePath = fileInfo.absoluteFilePath();
-            qDebug() << "Found audio file:" << filePath;
+            QString filePath0 = fileInfo.absoluteFilePath();
 
             // 将音乐文件添加到播放列表中
-            QUrl url = QUrl::fromLocalFile(filePath);
+            QUrl url = QUrl::fromLocalFile(filePath0);
             musicList.append(url);
+            qDebug() << "Found audio fileUrl: " << url;
         }
     }
-    // qDebug() << "The size of musicList : " << musicList.size();
+    qDebug() << "The size of musicList(loadMusicList) : " << musicList.size();
 
     if (recursive) {
         // 获取当前目录中的所有子目录（排除.和..）
@@ -188,7 +252,7 @@ void MainWindow::loadMusicList(const QString basePath, bool recursive)
 void MainWindow::playPreview()
 {
     qDebug() << "playPreview called! List size:" << musicList.size() <<
-        "Current index:" << musicCurIndex;
+        "Current index(last):" << musicCurIndex;
     if(musicList.isEmpty()) return;
 
     if(musicCurIndex > 0) {
@@ -196,15 +260,17 @@ void MainWindow::playPreview()
     } else {
         musicCurIndex = musicList.size() - 1;
     }
-    player->pause();
-    player->setSource(musicList.at(musicCurIndex));
-    player->play();
-    ui->PlayAndPauseBtn->setIcon(QIcon(":/res/Icon/Pause.png"));
+
+    qDebug() << "musicCurIndex(now) = " << musicCurIndex;
+
+    playCurrentMusic();
 }
 
 void MainWindow::playNext()
 {
-    qDebug() << "The size of musicList : " << musicList.size();
+    qDebug() << "playNext called! List size:" << musicList.size() <<
+        "Current index(last):" << musicCurIndex;
+
     if(musicList.isEmpty()) {
         qDebug() << "musicList is empty!";
         return;
@@ -214,9 +280,10 @@ void MainWindow::playNext()
     } else {
         musicCurIndex = 0;
     }
-    player->pause();
-    player->setSource(musicList.at(musicCurIndex));
-    player->play();
-    ui->PlayAndPauseBtn->setIcon(QIcon(":/res/Icon/Pause.png"));
+
+    qDebug() << "musicCurIndex(now) = " << musicCurIndex;
+
+    playCurrentMusic();
 }
+
 

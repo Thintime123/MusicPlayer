@@ -8,6 +8,7 @@
 #include <QAudioOutput>
 #include <QFileDialog>
 #include <QList>
+#include <QVideoWidget>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -27,6 +28,7 @@ private:
     void initButton();
     void setBackGround(const QString &filename);
 
+    void playCurrentMusic();
     void playAndPause();
     void selectFile();
 
@@ -39,8 +41,11 @@ private:
     Ui::MainWindow *ui;
     QMediaPlayer *player; // 媒体播放器对象
     QAudioOutput *audioOutput; // 音频输出对象
+    //QVideoWidget *videoWidget; // 视频输出对象
+
     QString filePath;   // 正要播放的音频文件路径
 
+    QString basePath;
     QList<QUrl> musicList; // 音乐列表
     int musicCurIndex = 0; // 当前音乐索引
 
