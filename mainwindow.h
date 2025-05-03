@@ -10,6 +10,7 @@
 #include <QList>
 #include <QVideoWidget>
 #include <QRandomGenerator>
+#include <QMessageBox>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -41,6 +42,10 @@ private:
     void playModeSelect();
     void playStatusChange(QMediaPlayer::MediaStatus status);
 
+    void loadMusicListWidget(const QString& basePath);
+
+    void handleShowListWidget();
+
 private:
     Ui::MainWindow *ui;
     QMediaPlayer *player; // 媒体播放器对象
@@ -60,5 +65,7 @@ private:
         singleMode
     };
     musicMode musicCurrentMode;
+
+    bool isShowListWidget;
 };
 #endif // MAINWINDOW_H

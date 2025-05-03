@@ -23,7 +23,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     musicCurrentMode = orderMode;
 
+    isShowListWidget = false;
     loadMusicList(basePath, true); // 加载音乐列表
+    loadMusicListWidget(basePath); // 加载音乐列表到列表控件
 
     setWindowTitle("Music Player");
     initButton();
@@ -38,7 +40,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->PlayAndPauseBtn, &QPushButton::clicked, this, &MainWindow::playAndPause);
 
     // 信号与槽连接--选择文件
-    connect(ui->ListBtn, &QPushButton::clicked, this, &MainWindow::selectFile);
+    //connect(ui->ListBtn, &QPushButton::clicked, this, &MainWindow::selectFile);
+    connect(ui->ListBtn, &QPushButton::clicked, this, &MainWindow::handleShowListWidget);
 
     // 信号与槽连接--上一首
     connect(ui->PrevBtn, &QPushButton::clicked, this, &MainWindow::playPreview);
@@ -74,6 +77,28 @@ void MainWindow::initButton()
     setButtonStyle(ui->NextBtn, ":/res/Icon/Next.png");
     setButtonStyle(ui->ModeBtn, ":/res/Icon/Order.png");
     setButtonStyle(ui->ListBtn, ":/res/Icon/Music.png");
+
+    ui->musicListWidget->hide();
+    ui->musicListWidget->setStyleSheet("QListWidget {"
+                                       "border: none;"
+                                       //"color: white;"
+                                       "font-size: 16px;"
+                                       "border-radius: 20px;"
+                                       "background-color: rgba(255, 255, 255, 0.1);"
+                                       "}"
+
+                                       "QListWidget::item {"
+                                       "border: none;"
+                                       "border-radius: 20px;"
+                                       "padding: 10px;"
+                                       "background-color: rgba(255, 255, 255, 0.2);"
+                                       "}"
+
+                                       "QListWidget::item:selected {"
+                                       "border: none;"
+                                       "background-color: rgba(255, 255, 255, 0.5);"
+                                       "boarder-radius: 20px;"
+                                       "}");
 }
 
 void MainWindow::setBackGround(const QString &filename)
@@ -216,41 +241,31 @@ void MainWindow::loadMusicList(const QString basePath, bool recursive)
     // 获取符合条件的文件列表
     QFileInfoList fileList = dir.entryInfoList();
 
-    // for (const QFileInfo &fileInfo : fileList) {
-    //     if (fileInfo.isFile()) {
-    //         QString filePath = fileInfo.absoluteFilePath();
-    //         qDebug() << "Found audio file:" << filePath;
 
-    //         // 将音乐文件添加到播放列表中
-    //         QUrl url = QUrl::fromLocalFile(filePath);
-    //         musicList.append(url);
-    //     }
-    // }
-    for (int i = 0; i < fileList.size(); i++) {
-        QFileInfo fileInfo = fileList[i];
+
+    for (const QFileInfo &fileInfo : fileList) {
         if (fileInfo.isFile()) {
-            QString filePath0 = fileInfo.absoluteFilePath();
+            QString filePath = fileInfo.absoluteFilePath();
+            qDebug() << "Found audio file:" << filePath;
 
             // 将音乐文件添加到播放列表中
-            QUrl url = QUrl::fromLocalFile(filePath0);
+            QUrl url = QUrl::fromLocalFile(filePath);
             musicList.append(url);
             qDebug() << "Found audio fileUrl: " << url;
         }
     }
+
     qDebug() << "The size of musicList(loadMusicList) : " << musicList.size();
 
     if (recursive) {
         // 获取当前目录中的所有子目录（排除.和..）
         QStringList subdirs = dir.entryList(QDir::NoDotAndDotDot | QDir::Dirs);
 
-        // for (const QString &subdir : subdirs) {
-        //     QString subdirPath = basePath + "/" + subdir;
-        //     loadMusicList(subdirPath, recursive);
-        // }
-        for (int i = 0; i < subdirs.size(); i++) {
-            QString subdirPath = basePath + "/" + subdirs[i];
+        for (const QString &subdir : subdirs) {
+            QString subdirPath = basePath + "/" + subdir;
             loadMusicList(subdirPath, recursive);
         }
+
     }
 }
 
@@ -337,4 +352,43 @@ void MainWindow::playStatusChange(QMediaPlayer::MediaStatus status) {
             playCurrentMusic();
         }
     }
+    ui->musicListWidget->setCurrentRow(musicCurIndex);
 }
+
+void MainWindow::loadMusicListWidget(const QString& path)
+{
+    QDir dir(path);
+    if (!dir.exists()) {
+        QMessageBox::warning(this, "Error", "Directory does not exist.");
+        return;
+    }
+    // 设置文件过滤器，只查找指定格式的音频文件
+    QStringList filters; // 音频文件格式
+    filters << "*.mp3" << "*.wav" << "*.flac" << "*.ogg";
+    dir.setNameFilters(filters);
+
+    // 设置过滤标志，只查找文件（不包括符号链接）
+    dir.setFilter(QDir::Files | QDir::NoSymLinks);
+
+    // 获取符合条件的文件列表
+    QFileInfoList fileList = dir.entryInfoList();
+
+    for(auto element : fileList)
+    {
+        ui->musicListWidget->addItem(element.baseName());
+    }
+
+    ui->musicListWidget->setCurrentRow(0);
+}
+
+void MainWindow::handleShowListWidget()
+{
+    if(isShowListWidget) {
+        ui->musicListWidget->hide();
+        isShowListWidget = false;
+    } else {
+        ui->musicListWidget->show();
+        isShowListWidget = true;
+    }
+}
+
