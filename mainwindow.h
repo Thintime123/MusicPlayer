@@ -11,6 +11,7 @@
 #include <QVideoWidget>
 #include <QRandomGenerator>
 #include <QMessageBox>
+#include <QPropertyAnimation>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -31,10 +32,15 @@ private:
     void setBackGround(const QString &filename);
 
     void playCurrentMusic();
+
+    void loadMusicList(const QString basePath, bool recursive);
+    void loadMusicListWidget(const QString& basePath);
+
+
+private slots:
     void playAndPause();
     void selectFile();
 
-    void loadMusicList(const QString basePath, bool recursive);
 
     void playPreview();
     void playNext();
@@ -42,10 +48,15 @@ private:
     void playModeSelect();
     void playStatusChange(QMediaPlayer::MediaStatus status);
 
-    void loadMusicListWidget(const QString& basePath);
-
     void handleShowListWidget();
 
+    void showAnimation(QWidget* window);
+    void hideAnimation(QWidget* window);
+    
+    void clickListWidgetItem(int row); // 添加处理点击列表项的函数
+
+    void musicPositonChange();
+    void progressBarMoved(int positon);
 private:
     Ui::MainWindow *ui;
     QMediaPlayer *player; // 媒体播放器对象
