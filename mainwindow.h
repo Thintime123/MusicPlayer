@@ -9,6 +9,7 @@
 #include <QFileDialog>
 #include <QList>
 #include <QVideoWidget>
+#include <QRandomGenerator>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -37,6 +38,9 @@ private:
     void playPreview();
     void playNext();
 
+    void playModeSelect();
+    void playStatusChange(QMediaPlayer::MediaStatus status);
+
 private:
     Ui::MainWindow *ui;
     QMediaPlayer *player; // 媒体播放器对象
@@ -49,5 +53,12 @@ private:
     QList<QUrl> musicList; // 音乐列表
     int musicCurIndex = 0; // 当前音乐索引
 
+    enum musicMode {
+        orderMode,
+        randomMode,
+        loopMode,
+        singleMode
+    };
+    musicMode musicCurrentMode;
 };
 #endif // MAINWINDOW_H

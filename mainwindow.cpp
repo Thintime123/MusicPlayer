@@ -13,16 +13,15 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     qDebug() << "\n\nstart*******************\n\n";
-    player = new QMediaPlayer(this); // 初始化媒体播放器对象
-    audioOutput = new QAudioOutput(this); // 初始化音频输出对象
-    //videoWidget = new QVideoWidget(this); // 初始化视频输出对象
-    //videoWidget->setMinimumSize(800, 600); // 设置视频输出对象的最小大小
+    player = new QMediaPlayer(this);
+    audioOutput = new QAudioOutput(this);
 
     player->setAudioOutput(audioOutput); // 设置音频输出对象
-    //player->setVideoOutput(videoWidget); // 设置视频输出对象
 
     musicCurIndex = 0;
     basePath = ":/res/Audio";
+
+    musicCurrentMode = orderMode;
 
     loadMusicList(basePath, true); // 加载音乐列表
 
@@ -33,7 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
     setFixedSize(1080, 720);
     setBackGround(":/res/Background/bkgd.png");
 
-    audioOutput->setVolume(0.5); // 设置音量为50%
+    audioOutput->setVolume(0.5);
 
     // 信号与槽连接--开始与暂停
     connect(ui->PlayAndPauseBtn, &QPushButton::clicked, this, &MainWindow::playAndPause);
@@ -46,6 +45,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 信号与槽连接--下一首
     connect(ui->NextBtn, &QPushButton::clicked, this, &MainWindow::playNext);
+
+    // 信号与槽连接--播放模式选择
+    connect(ui->ModeBtn, &QPushButton::clicked, this, &MainWindow::playModeSelect);
+
+    // 信号与槽连接--音频播放结束
+    connect(player, &QMediaPlayer::mediaStatusChanged, this, &MainWindow::playStatusChange);
 }
 
 MainWindow::~MainWindow()
@@ -275,6 +280,7 @@ void MainWindow::playNext()
         qDebug() << "musicList is empty!";
         return;
     }
+
     if(musicCurIndex < musicList.size() - 1) {
         musicCurIndex++;
     } else {
@@ -286,4 +292,49 @@ void MainWindow::playNext()
     playCurrentMusic();
 }
 
+void MainWindow::playModeSelect()
+{
+    qDebug() << "\nplayModeSelect called!";
 
+    if(musicCurrentMode == orderMode) {
+        musicCurrentMode = randomMode;
+        ui->ModeBtn->setIcon(QIcon(":/res/Icon/Random.png"));
+
+        qDebug() << "musicCurrntMode = randomMode";
+    } else if(musicCurrentMode == randomMode) {
+        musicCurrentMode = loopMode;
+        ui->ModeBtn->setIcon(QIcon(":/res/Icon/Loop.png"));
+
+        qDebug() << "musicCurrntMode = loopMode";
+    } else if(musicCurrentMode == loopMode) {
+        musicCurrentMode = singleMode;
+        ui->ModeBtn->setIcon(QIcon(":/res/Icon/Single.png"));
+
+        qDebug() << "musicCurrntMode = singleMode";
+    } else if(musicCurrentMode == singleMode) {
+        musicCurrentMode = orderMode;
+        ui->ModeBtn->setIcon(QIcon(":/res/Icon/Order.png"));
+
+        qDebug() << "musicCurrntMode = orderMode";
+    }
+}
+
+void MainWindow::playStatusChange(QMediaPlayer::MediaStatus status) {
+    if(status == QMediaPlayer::EndOfMedia) {
+        if(musicCurrentMode == orderMode) {
+            if(musicCurIndex < musicList.size() - 1) {
+                playNext();
+            }
+        } else if(musicCurrentMode == randomMode) {
+            int oldIndex = musicCurIndex;
+            do {
+                musicCurIndex = QRandomGenerator::global()->bounded(musicList.size());
+            } while (musicList.size() > 1 && musicCurIndex == oldIndex);
+            playCurrentMusic();
+        } else if(musicCurrentMode == loopMode) {
+            playNext();
+        } else if(musicCurrentMode == singleMode) {
+            playCurrentMusic();
+        }
+    }
+}
