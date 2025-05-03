@@ -36,24 +36,28 @@ MainWindow::MainWindow(QWidget *parent)
 
     audioOutput->setVolume(0.5);
 
-    // 信号与槽连接--开始与暂停
     connect(ui->PlayAndPauseBtn, &QPushButton::clicked, this, &MainWindow::playAndPause);
 
-    // 信号与槽连接--选择文件
     //connect(ui->ListBtn, &QPushButton::clicked, this, &MainWindow::selectFile);
     connect(ui->ListBtn, &QPushButton::clicked, this, &MainWindow::handleShowListWidget);
 
-    // 信号与槽连接--上一首
     connect(ui->PrevBtn, &QPushButton::clicked, this, &MainWindow::playPreview);
 
-    // 信号与槽连接--下一首
     connect(ui->NextBtn, &QPushButton::clicked, this, &MainWindow::playNext);
 
-    // 信号与槽连接--播放模式选择
     connect(ui->ModeBtn, &QPushButton::clicked, this, &MainWindow::playModeSelect);
 
-    // 信号与槽连接--音频播放结束
     connect(player, &QMediaPlayer::mediaStatusChanged, this, &MainWindow::playStatusChange);
+    
+    // 连接列表项点击信号与槽
+    connect(ui->musicListWidget, &QListWidget::currentRowChanged, this, &MainWindow::clickListWidgetItem);
+
+    connect(player, &QMediaPlayer::positionChanged, this, &MainWindow::musicPositonChange);
+
+    connect(ui->progressBar, &QSlider::sliderMoved, this, &MainWindow::progressBarMoved);
+
+    // 初始化进度条的范围
+    ui->progressBar->setRange(0, 100);
 }
 
 MainWindow::~MainWindow()
@@ -384,11 +388,144 @@ void MainWindow::loadMusicListWidget(const QString& path)
 void MainWindow::handleShowListWidget()
 {
     if(isShowListWidget) {
-        ui->musicListWidget->hide();
+        // 使用侧边滑出动画隐藏列表
+        hideAnimation(ui->musicListWidget);
         isShowListWidget = false;
     } else {
-        ui->musicListWidget->show();
+        // 使用侧边滑入动画显示列表
+        showAnimation(ui->musicListWidget);
         isShowListWidget = true;
     }
 }
 
+void MainWindow::showAnimation(QWidget* widget)
+{
+    // 设置初始位置（在窗口右侧不可见区域）
+    int endX = this->width() - widget->width(); // 最终位置
+    int startX = this->width(); // 开始位置（窗口右边界外）
+    
+    widget->move(this->width(), 0);
+    widget->show();
+    
+    // 创建位置动画
+    QPropertyAnimation *animation = new QPropertyAnimation(widget, "geometry");
+    animation->setDuration(300); // 动画持续时间为300毫秒
+    
+    // 设置起始值（窗口右边缘）和结束值（目标位置）
+    animation->setStartValue(QRect(startX, 0, widget->width(), widget->height()));
+    animation->setEndValue(QRect(endX, 0, widget->width(), widget->height()));
+    
+    // 设置缓动曲线，使动画更自然
+    animation->setEasingCurve(QEasingCurve::OutCubic);
+    
+    // 启动动画
+    animation->start(QAbstractAnimation::DeleteWhenStopped);
+    
+    connect(animation, &QPropertyAnimation::finished, [=]() {
+        qDebug() << "滑入动画完成";
+    });
+}
+
+void MainWindow::hideAnimation(QWidget* widget)
+{
+    // 创建位置动画
+    QPropertyAnimation *animation = new QPropertyAnimation(widget, "geometry");
+    animation->setDuration(300); // 动画持续时间为300毫秒
+    
+    int startX = this->width() - widget->width(); // 当前位置
+    int endX = this->width(); // 目标位置（窗口右边界外）
+    
+    // 设置起始值（当前位置）和结束值（窗口右边缘）
+    animation->setStartValue(QRect(startX, 0, widget->width(), widget->height()));
+    animation->setEndValue(QRect(endX, 0, widget->width(), widget->height()));
+    
+    // 设置缓动曲线，使动画更自然
+    animation->setEasingCurve(QEasingCurve::InCubic);
+    
+    // 启动动画
+    animation->start(QAbstractAnimation::DeleteWhenStopped);
+    
+    // 当动画完成时隐藏控件
+    connect(animation, &QPropertyAnimation::finished, [=]() {
+        widget->hide();
+        qDebug() << "滑出动画完成";
+    });
+}
+
+void MainWindow::clickListWidgetItem(int row)
+{
+    qDebug() << "列表项被点击，行号:" << row;
+    
+    // 检查点击的行号是否合法
+    if (row >= 0 && row < musicList.size()) {
+        musicCurIndex = row;
+        playCurrentMusic();
+    } else {
+        qDebug() << "无效的行号:" << row;
+    }
+}
+
+void MainWindow::musicPositonChange()
+{
+    // 如果播放器没有媒体或正在寻找，则返回
+    if (player->mediaStatus() == QMediaPlayer::NoMedia || 
+        player->mediaStatus() == QMediaPlayer::LoadingMedia) {
+        return;
+    }
+    
+    // 获取当前播放位置（毫秒）
+    qint64 position = player->position();
+    
+    // 获取音频总时长（毫秒）
+    qint64 duration = player->duration();
+    
+    // 避免除零错误，确保总时长大于0
+    if (duration <= 0) {
+        return;
+    }
+    
+    // 更新进度条，阻断信号以避免循环触发
+    ui->progressBar->blockSignals(true);
+    ui->progressBar->setRange(0, duration);
+    ui->progressBar->setValue(position);
+    ui->progressBar->blockSignals(false);
+    
+    // 更新时间标签
+    // 将毫秒转换为时:分:秒格式
+    int positionSeconds = position / 1000;
+    int hours = positionSeconds / 3600;
+    int minutes = (positionSeconds % 3600) / 60;
+    int seconds = positionSeconds % 60;
+    
+    int durationSeconds = duration / 1000;
+    int durationHours = durationSeconds / 3600;
+    int durationMinutes = (durationSeconds % 3600) / 60;
+    int durationSeconds2 = durationSeconds % 60;
+    
+    // 更新当前时间和总时长标签
+    QString currentTimeStr = QString("%1:%2:%3")
+                              .arg(hours, 2, 10, QChar('0'))
+                              .arg(minutes, 2, 10, QChar('0'))
+                              .arg(seconds, 2, 10, QChar('0'));
+    
+    QString totalTimeStr = QString("%1:%2:%3")
+                            .arg(durationHours, 2, 10, QChar('0'))
+                            .arg(durationMinutes, 2, 10, QChar('0'))
+                            .arg(durationSeconds2, 2, 10, QChar('0'));
+    
+    ui->currentTime->setText(currentTimeStr);
+    ui->endTime->setText(totalTimeStr);
+    
+    qDebug() << "Position:" << currentTimeStr << "/" << totalTimeStr;
+}
+
+void MainWindow::progressBarMoved(int position)
+{
+    // 当用户拖动进度条时，更新播放位置
+    if (player->mediaStatus() != QMediaPlayer::NoMedia && 
+        player->mediaStatus() != QMediaPlayer::LoadingMedia) {
+        
+        qDebug() << "进度条移动到:" << position << "毫秒";
+        player->setPosition(position);
+    }
+}
