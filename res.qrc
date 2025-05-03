@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>res/Icon/Loop.png</file>
         <file>res/Icon/Music.png</file>
         <file>res/Icon/Next.png</file>
         <file>res/Icon/Order.png</file>
@@ -13,5 +12,7 @@
         <file>res/Background/bkgd.png</file>
         <file>res/Audio/weiyi.mp3</file>
         <file>res/Lyrics/weiyi.lrc</file>
+        <file>res/Icon/Single.png</file>
+        <file>res/Icon/Loop.png</file>
     </qresource>
 </RCC>
