@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
     setFixedSize(1080, 720);
     setBackGround(":/res/Background/bkgd.png");
 
-    audioOutput->setVolume(0.5);
+    audioOutput->setVolume(0.7);
 
     connect(ui->PlayAndPauseBtn, &QPushButton::clicked, this, &MainWindow::playAndPause);
 
@@ -521,7 +521,6 @@ void MainWindow::musicPositonChange()
 
 void MainWindow::progressBarMoved(int position)
 {
-    // 当用户拖动进度条时，更新播放位置
     if (player->mediaStatus() != QMediaPlayer::NoMedia && 
         player->mediaStatus() != QMediaPlayer::LoadingMedia) {
         
@@ -529,3 +528,5 @@ void MainWindow::progressBarMoved(int position)
         player->setPosition(position);
     }
 }
+
+

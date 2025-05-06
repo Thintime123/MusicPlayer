@@ -7,12 +7,35 @@
         <file>res/Icon/Play.png</file>
         <file>res/Icon/Prev.png</file>
         <file>res/Icon/Random.png</file>
-        <file>res/Lyrics/juhao.lrc</file>
-        <file>res/Audio/句号.mp3</file>
+        <file>res/Lyrics/句号-邓紫棋-歌词.lrc</file>
+        <file>res/Audio/句号-邓紫棋.mp3</file>
         <file>res/Background/bkgd.png</file>
-        <file>res/Audio/唯一.mp3</file>
-        <file>res/Lyrics/weiyi.lrc</file>
+        <file>res/Audio/唯一-邓紫棋.mp3</file>
+        <file>res/Lyrics/唯一-邓紫棋-歌词.lrc</file>
         <file>res/Icon/Single.png</file>
         <file>res/Icon/Loop.png</file>
+        <file>res/Audio/白鸽乌鸦相爱的戏码-潘成.mp3</file>
+        <file>res/Audio/泡沫-邓紫棋.mp3</file>
+        <file>res/Lyrics/白鸽乌鸦相爱的戏码-潘成-歌词.lrc</file>
+        <file>res/Lyrics/泡沫-邓紫棋-歌词.lrc</file>
+        <file>res/Audio/红色高跟鞋-蔡健雅.mp3</file>
+        <file>res/Lyrics/红色高跟鞋-蔡健雅-歌词.lrc</file>
+        <file>res/Audio/天下-张杰.mp3</file>
+        <file>res/Lyrics/天下-张杰-歌词.lrc</file>
+        <file>res/Audio/舍得-王唯旖.mp3</file>
+        <file>res/Audio/青花-周传雄.mp3</file>
+        <file>res/Lyrics/舍得-王唯旖-歌词.lrc</file>
+        <file>res/Lyrics/青花-周传雄-歌词.lrc</file>
+        <file>res/Audio/青花瓷-周杰伦.mp3</file>
+        <file>res/Lyrics/青花瓷-周杰伦-歌词.lrc</file>
+        <file>res/Audio/Whistle-Flo_Rida.mp3</file>
+        <file>res/Audio/Take_Me_Hand-DAISHI_DANCE&amp;Cécile_Corbel.mp3</file>
+        <file>res/Audio/Good_Time-Owl_City&amp;Carly_Rae_Jepsen.mp3</file>
+        <file>res/Audio/有形的翅膀-张韶涵.mp3</file>
+        <file>res/Audio/明天，你好-牛奶咖啡.mp3</file>
+        <file>res/Lyrics/明天，你好-牛奶咖啡-歌词.lrc</file>
+        <file>res/Lyrics/Take_Me_Hand-DAISHI_DANCE&amp;Cécile_Corbel-歌词.lrc</file>
+        <file>res/Lyrics/Good_Time-Owl_City&amp;Carly_Rae_Jepsen-歌词.lrc</file>
+        <file>res/Lyrics/有形的翅膀-张韶涵-歌词.lrc</file>
     </qresource>
 </RCC>
