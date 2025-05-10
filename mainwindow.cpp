@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
     setFixedSize(1080, 720);
     setBackGround(":/res/Background/bkgd.png");
 
-    audioOutput->setVolume(0.7);
+    audioOutput->setVolume(defaultVolume);
 
     connect(ui->PlayAndPauseBtn, &QPushButton::clicked, this, &MainWindow::playAndPause);
 
@@ -60,8 +60,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->progressBar->setRange(0, 100);
     ui->volumeBar->setRange(0, 100);
 
-    ui->volumeBar->setValue(70);
+    ui->volumeBar->setValue(defaultVolume * 100);
     ui->volumeBar->hide();
+    isShowVolumeBar = false;
+    qApp->installEventFilter(this); // 为整个应用安装事件过滤器
 
     connect(ui->volumeBtn, &QPushButton::clicked, this, &MainWindow::volumeBtnClicked);
 
@@ -540,16 +542,36 @@ void MainWindow::progressBarMoved(int position)
 
 void MainWindow::volumeBtnClicked()
 {
-    if(ui->volumeBar->isHidden()) {
-        ui->volumeBar->show();
-        if(ui->volumeBar->value()) {
-            ui->volumeBtn->setIcon(QIcon(":/res/Icon/VolumeOn.png"));
-            audioOutput->setVolume(ui->volumeBar->value() / 100.0);
+    // if(ui->volumeBar->isHidden()) {
+    //     ui->volumeBar->show();
+    //     ui->volumeBtn->setIcon(QIcon(":/res/Icon/VolumeOn.png"));
+    //     if(ui->volumeBar->value() == 0) {
+    //         ui->volumeBar->setValue(50);
+    //     }
+    //     audioOutput->setVolume(ui->volumeBar->value() / 100.0);
+    // } else {
+    //     // ui->volumeBar->hide();
+    //     ui->volumeBtn->setIcon(QIcon(":/res/Icon/VolumeOff.png"));
+    //     audioOutput->setVolume(0);
+    //     ui->volumeBar->setValue(0);
+    // }
+
+    if(ui->volumeBar->value()) {
+        if(ui->volumeBar->isHidden()) {
+            ui->volumeBar->show();
+            isShowVolumeBar = true;
+        } else {
+            ui->volumeBtn->setIcon(QIcon(":/res/Icon/VolumeOff.png"));
+            defaultVolume = ui->volumeBar->value() / 100.0;
+            ui->volumeBar->setValue(0);
+            audioOutput->setVolume(0);
         }
     } else {
-        ui->volumeBar->hide();
-        ui->volumeBtn->setIcon(QIcon(":/res/Icon/VolumeOff.png"));
-        audioOutput->setVolume(0);
+        ui->volumeBar->show();
+        isShowVolumeBar = true;
+        ui->volumeBar->setValue(defaultVolume * 100);
+        audioOutput->setVolume(defaultVolume);
+        ui->volumeBtn->setIcon(QIcon(":/res/Icon/VolumeOn.png"));
     }
 }
 
@@ -564,3 +586,33 @@ void MainWindow::volumeBarMoved(int value)
     }
 }
 
+bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
+    if (event->type() == QEvent::MouseButtonPress) {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+
+        // 获取点击位置的控件
+        QWidget *clickedWidget = QApplication::widgetAt(mouseEvent->globalPosition().toPoint());
+
+        // 检查点击是否在音量控制区域外
+        bool clickOutsideVolume = true;
+
+        // 检查点击的控件是否是音量按钮或滑块或其子控件
+        if (clickedWidget) {
+            if (clickedWidget == ui->volumeBtn ||
+                clickedWidget == ui->volumeBar ||
+                ui->volumeBtn->isAncestorOf(clickedWidget) ||
+                ui->volumeBar->isAncestorOf(clickedWidget)) {
+                clickOutsideVolume = false;
+            }
+        }
+
+        // 如果点击在音量区域外且音量条可见，则隐藏
+        if (clickOutsideVolume && ui->volumeBar->isVisible()) {
+            ui->volumeBar->hide();
+            return true; // 事件已处理
+        }
+    }
+
+    // 其他事件继续传递
+    return QMainWindow::eventFilter(watched, event);
+}
