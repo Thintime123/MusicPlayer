@@ -68,6 +68,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->volumeBtn, &QPushButton::clicked, this, &MainWindow::volumeBtnClicked);
 
     connect(ui->volumeBar, &QSlider::sliderMoved, this, &MainWindow::volumeBarMoved);
+
+    initDisc();
 }
 
 MainWindow::~MainWindow()
@@ -162,6 +164,10 @@ void MainWindow::playCurrentMusic() {
         player->setSource(convertToQrcUrl(musicList[musicCurIndex]));
         player->play();
         ui->PlayAndPauseBtn->setIcon(QIcon(":/res/Icon/Pause.png"));
+
+        discAnimation->stop();
+        setCurRotation(0);
+        discAnimation->start();
     } else {
         qDebug() << "Invalid music index:" << musicCurIndex;
     }
@@ -174,6 +180,7 @@ void MainWindow::playAndPause()
     if (player->playbackState() == QMediaPlayer::PlayingState) {
         player->pause();
         ui->PlayAndPauseBtn->setIcon(QIcon(":/res/Icon/Play.png"));
+        discAnimation->pause();
     } else {
         // 否则，开始播放
         if(player->playbackState() == QMediaPlayer::StoppedState) {
@@ -181,6 +188,7 @@ void MainWindow::playAndPause()
         } else if(player->playbackState() == QMediaPlayer::PausedState){
             player->play();
             ui->PlayAndPauseBtn->setIcon(QIcon(":/res/Icon/Pause.png"));
+            discAnimation->resume();
         }
     }
     qDebug() << "Player state:" << player->playbackState();
@@ -596,7 +604,6 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
         // 检查点击是否在音量控制区域外
         bool clickOutsideVolume = true;
 
-        // 检查点击的控件是否是音量按钮或滑块或其子控件
         if (clickedWidget) {
             if (clickedWidget == ui->volumeBtn ||
                 clickedWidget == ui->volumeBar ||
@@ -606,13 +613,66 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
             }
         }
 
-        // 如果点击在音量区域外且音量条可见，则隐藏
         if (clickOutsideVolume && ui->volumeBar->isVisible()) {
             ui->volumeBar->hide();
+            // QPropertyAnimation *animation = new QPropertyAnimation(ui->volumeBar, "geometry", this);
+            // animation->setDuration(200); // 200毫秒
+            // animation->setStartValue(ui->volumeBar->geometry());
+            // animation->setEndValue(QRect(ui->volumeBar->x(),
+            //                              ui->volumeBar->y(),
+            //                              ui->volumeBar->width(),
+            //                              0));
+            // animation->start(QAbstractAnimation::DeleteWhenStopped);
+
+            // connect(animation, &QPropertyAnimation::finished, [this]() {
+            //     ui->volumeBar->hide();
+            // });
             return true; // 事件已处理
         }
     }
 
     // 其他事件继续传递
     return QMainWindow::eventFilter(watched, event);
+}
+
+void MainWindow::initDisc()
+{
+    //
+    QPixmap discImage(":/res/Icon/Disc.png");
+    ui->disc->setPixmap(discImage);
+    ui->disc->setScaledContents(true); // 确保图像缩放以填充整个标签
+
+    // 设置旋转中心点
+    ui->disc->setAlignment(Qt::AlignCenter);
+
+    // 初始化旋转动画
+    discAnimation = new QPropertyAnimation(this, "curRotation");
+    discAnimation->setDuration(10000); // 10秒转一圈
+    discAnimation->setStartValue(0);
+    discAnimation->setEndValue(360);
+    discAnimation->setLoopCount(-1); // 无限循环
+
+    connect(discAnimation, &QPropertyAnimation::valueChanged, this, [this](const QVariant &value) {
+        // 每当值变化时更新碟片旋转角度
+        int rotation = value.toInt();
+
+        // 创建变换矩阵
+        QTransform transform;
+        // 将原点移到标签中心
+        transform.translate(ui->disc->width()/2, ui->disc->height()/2);
+
+        transform.rotate(rotation);
+        // 将原点移回左上角
+        transform.translate(-ui->disc->width()/2, -ui->disc->height()/2);
+
+        // 获取原始图像
+        QPixmap originalPixmap(":/res/Icon/Disc.png");
+        // 应用旋转变换
+        QPixmap rotatedPixmap = originalPixmap.transformed(transform, Qt::SmoothTransformation);
+
+        // 设置旋转后的图像
+        ui->disc->setPixmap(rotatedPixmap);
+    });
+
+    curRotation = 0;
 }

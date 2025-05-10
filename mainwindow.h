@@ -29,6 +29,13 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    // 碟片旋转角度属性访问器
+    int getCurRotation() const { return curRotation; }
+    void setCurRotation(int rotation) { curRotation = rotation; }
+
+    // 申明为 Q_PROPERTY，使得QPropertyAnimation可以访问
+    Q_PROPERTY(int curRotation READ getCurRotation WRITE setCurRotation)
+
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override; // 事件过滤器
 
@@ -40,6 +47,7 @@ private:
 
     void loadMusicList(const QString basePath, bool recursive);
     void loadMusicListWidget(const QString& basePath);
+
 
 
 private slots:
@@ -89,5 +97,9 @@ private:
 
     bool isShowListWidget;
     bool isShowVolumeBar;
+
+    QPropertyAnimation *discAnimation;
+    int curRotation;
+    void initDisc();
 };
 #endif // MAINWINDOW_H

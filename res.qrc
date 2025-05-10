@@ -39,5 +39,6 @@
         <file>res/Lyrics/有形的翅膀-张韶涵-歌词.lrc</file>
         <file>res/Icon/VolumeOff.png</file>
         <file>res/Icon/VolumeOn.png</file>
+        <file>res/Icon/Disc.png</file>
     </qresource>
 </RCC>
