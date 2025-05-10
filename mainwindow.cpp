@@ -54,10 +54,18 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(player, &QMediaPlayer::positionChanged, this, &MainWindow::musicPositonChange);
 
-    connect(ui->progressBar, &QSlider::sliderMoved, this, &MainWindow::progressBarMoved);
+    connect(ui->progressBar, &QSlider::valueChanged, this, &MainWindow::progressBarMoved);
 
     // 初始化进度条的范围
     ui->progressBar->setRange(0, 100);
+    ui->volumeBar->setRange(0, 100);
+
+    ui->volumeBar->setValue(70);
+    ui->volumeBar->hide();
+
+    connect(ui->volumeBtn, &QPushButton::clicked, this, &MainWindow::volumeBtnClicked);
+
+    connect(ui->volumeBar, &QSlider::sliderMoved, this, &MainWindow::volumeBarMoved);
 }
 
 MainWindow::~MainWindow()
@@ -81,6 +89,7 @@ void MainWindow::initButton()
     setButtonStyle(ui->NextBtn, ":/res/Icon/Next.png");
     setButtonStyle(ui->ModeBtn, ":/res/Icon/Order.png");
     setButtonStyle(ui->ListBtn, ":/res/Icon/Music.png");
+    setButtonStyle(ui->volumeBtn, ":/res/Icon/VolumeOn.png");
 
     ui->musicListWidget->hide();
     ui->musicListWidget->setStyleSheet("QListWidget {"
@@ -529,4 +538,29 @@ void MainWindow::progressBarMoved(int position)
     }
 }
 
+void MainWindow::volumeBtnClicked()
+{
+    if(ui->volumeBar->isHidden()) {
+        ui->volumeBar->show();
+        if(ui->volumeBar->value()) {
+            ui->volumeBtn->setIcon(QIcon(":/res/Icon/VolumeOn.png"));
+            audioOutput->setVolume(ui->volumeBar->value() / 100.0);
+        }
+    } else {
+        ui->volumeBar->hide();
+        ui->volumeBtn->setIcon(QIcon(":/res/Icon/VolumeOff.png"));
+        audioOutput->setVolume(0);
+    }
+}
+
+void MainWindow::volumeBarMoved(int value)
+{
+    audioOutput->setVolume(value / 100.0);
+
+    if(value == 0) {
+        ui->volumeBtn->setIcon(QIcon(":/res/Icon/VolumeOff.png"));
+    } else {
+        ui->volumeBtn->setIcon(QIcon(":/res/Icon/VolumeOn.png"));
+    }
+}
 

@@ -7,19 +7,75 @@
     <x>0</x>
     <y>0</y>
     <width>1089</width>
-    <height>662</height>
+    <height>680</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <widget class="QListWidget" name="musicListWidget">
+    <property name="geometry">
+     <rect>
+      <x>750</x>
+      <y>30</y>
+      <width>341</width>
+      <height>501</height>
+     </rect>
+    </property>
+   </widget>
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
-      <x>110</x>
-      <y>590</y>
-      <width>681</width>
+      <x>70</x>
+      <y>540</y>
+      <width>761</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QLabel" name="currentTime">
+       <property name="text">
+        <string>00:00:00</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSlider" name="progressBar">
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="endTime">
+       <property name="text">
+        <string>00:00:00</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QSlider" name="volumeBar">
+    <property name="geometry">
+     <rect>
+      <x>830</x>
+      <y>460</y>
+      <width>51</width>
+      <height>121</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Orientation::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QWidget" name="">
+    <property name="geometry">
+     <rect>
+      <x>111</x>
+      <y>603</y>
+      <width>841</width>
       <height>51</height>
      </rect>
     </property>
@@ -59,51 +115,20 @@
        </property>
       </widget>
      </item>
-    </layout>
-   </widget>
-   <widget class="QListWidget" name="musicListWidget">
-    <property name="geometry">
-     <rect>
-      <x>750</x>
-      <y>30</y>
-      <width>341</width>
-      <height>501</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QWidget" name="">
-    <property name="geometry">
-     <rect>
-      <x>70</x>
-      <y>550</y>
-      <width>761</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
-      <widget class="QLabel" name="currentTime">
+      <widget class="QPushButton" name="volumeBtn">
        <property name="text">
-        <string>00:00:00</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QSlider" name="progressBar">
-       <property name="orientation">
-        <enum>Qt::Orientation::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="endTime">
-       <property name="text">
-        <string>00:00:00</string>
+        <string/>
        </property>
       </widget>
      </item>
     </layout>
    </widget>
+   <zorder>layoutWidget</zorder>
+   <zorder>musicListWidget</zorder>
+   <zorder>layoutWidget</zorder>
+   <zorder>volumeBtn</zorder>
+   <zorder>volumeBar</zorder>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>

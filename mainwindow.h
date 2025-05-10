@@ -57,6 +57,10 @@ private slots:
 
     void musicPositonChange();
     void progressBarMoved(int positon);
+
+    void volumeBtnClicked();
+    void volumeBarMoved(int value);
+
 private:
     Ui::MainWindow *ui;
     QMediaPlayer *player; // 媒体播放器对象

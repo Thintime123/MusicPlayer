@@ -37,5 +37,7 @@
         <file>res/Lyrics/Take_Me_Hand-DAISHI_DANCE&amp;Cécile_Corbel-歌词.lrc</file>
         <file>res/Lyrics/Good_Time-Owl_City&amp;Carly_Rae_Jepsen-歌词.lrc</file>
         <file>res/Lyrics/有形的翅膀-张韶涵-歌词.lrc</file>
+        <file>res/Icon/VolumeOff.png</file>
+        <file>res/Icon/VolumeOn.png</file>
     </qresource>
 </RCC>
