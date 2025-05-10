@@ -5,6 +5,8 @@
 #include <QPalette>
 #include <QFile>
 #include <QDebug>
+#include <QGraphicsOpacityEffect>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -70,6 +72,19 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->volumeBar, &QSlider::sliderMoved, this, &MainWindow::volumeBarMoved);
 
     initDisc();
+
+    lyricParser = new LyricParser(this);
+
+    ui->lyricLabel->setStyleSheet("QLabel {"
+                                  "color: white;"
+                                  "font-size: 18px;"
+                                  "font-weight: bold;"
+                                  "background-color: rgba(0, 0, 0);"
+                                  "border-radius: 10px;"
+                                  "padding: 10px;"
+                                  "}");
+    ui->lyricLabel->setAlignment(Qt::AlignCenter);
+
 }
 
 MainWindow::~MainWindow()
@@ -142,7 +157,6 @@ void MainWindow::setBackGround(const QString &filename)
 
 }
 
-
 QUrl convertToQrcUrl(const QUrl &fileUrl) {
     if (fileUrl.scheme() == "file" && fileUrl.toString().startsWith("file::")) {
         // 获取资源路径部分（去掉 file:: 前缀）
@@ -164,6 +178,12 @@ void MainWindow::playCurrentMusic() {
         player->setSource(convertToQrcUrl(musicList[musicCurIndex]));
         player->play();
         ui->PlayAndPauseBtn->setIcon(QIcon(":/res/Icon/Pause.png"));
+
+        // 获取当前音乐文件名（不含路径和扩展名）
+        QString musicFileName = QFileInfo(musicList[musicCurIndex].toString()).baseName();
+
+        // 加载对应的歌词文件
+        loadLyric(musicFileName);
 
         discAnimation->stop();
         setCurRotation(0);
@@ -494,6 +514,8 @@ void MainWindow::musicPositonChange()
     
     // 获取当前播放位置（毫秒）
     qint64 position = player->position();
+
+    updateLyric(position);
     
     // 获取音频总时长（毫秒）
     qint64 duration = player->duration();
@@ -675,4 +697,149 @@ void MainWindow::initDisc()
     });
 
     curRotation = 0;
+}
+
+void MainWindow::loadLyric(const QString &musicFileName)
+{
+    // 清除之前的歌词
+    lyricParser->clear();
+    ui->lyricLabel->clear();
+
+    // 尝试查找对应的歌词文件
+    QString lrcFilePath = ":/res/Lyrics/" + musicFileName + ".lrc";
+
+    if (QFile::exists(lrcFilePath)) {
+        if (lyricParser->loadLrcFile(lrcFilePath)) {
+            currentLyricFile = lrcFilePath;
+            qDebug() << "成功加载歌词文件:" << lrcFilePath;
+        } else {
+            qDebug() << "无法解析歌词文件:" << lrcFilePath;
+        }
+    } else {
+        // 如果资源中没有找到，尝试在本地目录查找
+        QString localLrcPath = basePath.replace(":/res/Audio", ":/res/Lyrics") + "/" + musicFileName + ".lrc";
+        if (QFile::exists(localLrcPath)) {
+            if (lyricParser->loadLrcFile(localLrcPath)) {
+                currentLyricFile = localLrcPath;
+                qDebug() << "成功加载本地歌词文件:" << localLrcPath;
+            } else {
+                qDebug() << "无法解析本地歌词文件:" << localLrcPath;
+            }
+        } else {
+            qDebug() << "找不到歌词文件:" << lrcFilePath << "或" << localLrcPath;
+        }
+    }
+}
+
+// void MainWindow::updateLyric(qint64 position)
+// {
+//     if (!lyricParser->hasLyric()) {
+//         return;
+//     }
+
+//     QString lyric = lyricParser->getLyricByTime(position);
+//     if (!lyric.isEmpty()) {
+//         ui->lyricLabel->setText(lyric);
+
+//         // 可以添加动画效果使歌词平滑切换
+//         QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(ui->lyricLabel);
+//         ui->lyricLabel->setGraphicsEffect(effect);
+
+//         QPropertyAnimation *animation = new QPropertyAnimation(effect, "opacity");
+//         animation->setDuration(200);
+//         animation->setStartValue(0.5);
+//         animation->setEndValue(1.0);
+//         animation->start(QPropertyAnimation::DeleteWhenStopped);
+//     }
+// }
+
+void MainWindow::updateLyric(qint64 position)
+{
+    if (!lyricParser->hasLyric()) {
+        ui->lyricLabel->setText("<div style='text-align: center; color: #888888;'>暂无歌词</div>");
+        return;
+    }
+
+    // 获取当前歌词及其时间戳
+    QString currentLyric = lyricParser->getLyricByTime(position);
+    static QString lastLyric;
+
+    // 只有当歌词真正变化时才更新显示
+    if (currentLyric != lastLyric) {
+        lastLyric = currentLyric;
+
+        // 获取所有歌词及其时间戳
+        QMap<qint64, QString> allLyrics = lyricParser->getAllLyrics();
+        QList<qint64> timestamps = allLyrics.keys();
+
+        // 找到当前歌词在时间列表中的位置
+        int currentIndex = -1;
+        for (int i = 0; i < timestamps.size(); i++) {
+            QString lyric = allLyrics.value(timestamps[i]);
+            if (lyric == currentLyric) {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        if (currentIndex < 0) {
+            // 如果没找到当前歌词，只显示当前歌词
+            ui->lyricLabel->setText("<div style='text-align: center;'>"
+                                    "<p style='font-size: 24px; color: white;'>" +
+                                    currentLyric + "</p></div>");
+            return;
+        }
+
+        // 构建多行歌词HTML
+        QString html = "<div style='text-align: center;'>";
+
+        // 显示当前歌词之前的最多5行歌词
+        int startIndex = qMax(0, currentIndex - 5);
+        for (int i = startIndex; i < currentIndex; i++) {
+            QString lyric = allLyrics.value(timestamps[i]);
+            // 越靠近当前歌词，透明度越低
+            int opacity = 40 + (i - startIndex) * 10;
+            html += QString("<p style='font-size: 16px; color: rgba(255,255,255,%1%); margin: 5px 0;'>%2</p>")
+                        .arg(opacity)
+                        .arg(lyric);
+        }
+
+        // 当前歌词 (高亮显示)
+        html += QString("<p style='font-size: 24px; color: white; font-weight: bold; margin: 10px 0;'>%1</p>")
+                    .arg(currentLyric);
+
+        // 显示当前歌词之后的最多5行歌词
+        int endIndex = qMin(timestamps.size() - 1, currentIndex + 5);
+        for (int i = currentIndex + 1; i <= endIndex; i++) {
+            QString lyric = allLyrics.value(timestamps[i]);
+            // 越远离当前歌词，透明度越高
+            int opacity = 80 - (i - currentIndex) * 10;
+            html += QString("<p style='font-size: 16px; color: rgba(255,255,255,%1%); margin: 5px 0;'>%2</p>")
+                        .arg(opacity)
+                        .arg(lyric);
+        }
+
+        html += "</div>";
+
+        ui->lyricLabel->setText(html);
+
+        // 使用静态变量存储效果和动画，避免频繁创建
+        static QGraphicsOpacityEffect *effect = nullptr;
+        static QPropertyAnimation *animation = nullptr;
+
+        if (!effect) {
+            effect = new QGraphicsOpacityEffect(ui->lyricLabel);
+            ui->lyricLabel->setGraphicsEffect(effect);
+            animation = new QPropertyAnimation(effect, "opacity");
+            animation->setDuration(200);
+        }
+
+        // 停止可能正在进行的动画
+        animation->stop();
+
+        // 设置新动画
+        animation->setStartValue(0.5);
+        animation->setEndValue(1.0);
+        animation->start();
+    }
 }

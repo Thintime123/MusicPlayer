@@ -137,11 +137,25 @@
      <string/>
     </property>
    </widget>
+   <widget class="QLabel" name="lyricLabel">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>90</y>
+      <width>571</width>
+      <height>361</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
    <zorder>layoutWidget</zorder>
    <zorder>musicListWidget</zorder>
    <zorder>layoutWidget</zorder>
    <zorder>volumeBar</zorder>
    <zorder>disc</zorder>
+   <zorder>lyricLabel</zorder>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
