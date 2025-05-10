@@ -12,6 +12,8 @@
 #include <QRandomGenerator>
 #include <QMessageBox>
 #include <QPropertyAnimation>
+#include <QEvent>
+#include <QMouseEvent>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -26,6 +28,9 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override; // 事件过滤器
 
 private:
     void initButton();
@@ -61,11 +66,12 @@ private slots:
     void volumeBtnClicked();
     void volumeBarMoved(int value);
 
+
 private:
     Ui::MainWindow *ui;
     QMediaPlayer *player; // 媒体播放器对象
     QAudioOutput *audioOutput; // 音频输出对象
-    //QVideoWidget *videoWidget; // 视频输出对象
+    float defaultVolume = 0.6;
 
     QString filePath;   // 正要播放的音频文件路径
 
@@ -82,5 +88,6 @@ private:
     musicMode musicCurrentMode;
 
     bool isShowListWidget;
+    bool isShowVolumeBar;
 };
 #endif // MAINWINDOW_H
