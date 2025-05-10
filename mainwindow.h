@@ -14,6 +14,7 @@
 #include <QPropertyAnimation>
 #include <QEvent>
 #include <QMouseEvent>
+#include "lyricparser.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -101,5 +102,12 @@ private:
     QPropertyAnimation *discAnimation;
     int curRotation;
     void initDisc();
+
+private:
+    LyricParser *lyricParser; // 歌词解析器
+    QString currentLyricFile; // 当前歌词文件路径
+
+    void loadLyric(const QString &musicFileName); // 加载歌词文件
+    void updateLyric(qint64 position); // 更新当前显示的歌词
 };
 #endif // MAINWINDOW_H
