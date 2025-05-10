@@ -73,18 +73,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     initDisc();
 
-    lyricParser = new LyricParser(this);
-
-    ui->lyricLabel->setStyleSheet("QLabel {"
-                                  "color: white;"
-                                  "font-size: 18px;"
-                                  "font-weight: bold;"
-                                  "background-color: rgba(0, 0, 0);"
-                                  "border-radius: 10px;"
-                                  "padding: 10px;"
-                                  "}");
-    ui->lyricLabel->setAlignment(Qt::AlignCenter);
-
+    initLyricLabel();
 }
 
 MainWindow::~MainWindow()
@@ -113,21 +102,23 @@ void MainWindow::initButton()
     ui->musicListWidget->hide();
     ui->musicListWidget->setStyleSheet("QListWidget {"
                                        "border: none;"
-                                       //"color: white;"
-                                       "font-size: 16px;"
+                                       "color: tomato;"
+                                       "font-size: 20px;"
                                        "border-radius: 20px;"
-                                       "background-color: rgba(255, 255, 255, 0.1);"
+                                       "background-color: rgba(228, 228, 229, 0.8);"
                                        "}"
 
                                        "QListWidget::item {"
                                        "border: none;"
                                        "border-radius: 20px;"
+                                       "color: tomato"
                                        "padding: 10px;"
                                        "background-color: rgba(255, 255, 255, 0.2);"
                                        "}"
 
                                        "QListWidget::item:selected {"
                                        "border: none;"
+                                       //"color: tomato"
                                        "background-color: rgba(255, 255, 255, 0.5);"
                                        "boarder-radius: 20px;"
                                        "}");
@@ -731,28 +722,6 @@ void MainWindow::loadLyric(const QString &musicFileName)
     }
 }
 
-// void MainWindow::updateLyric(qint64 position)
-// {
-//     if (!lyricParser->hasLyric()) {
-//         return;
-//     }
-
-//     QString lyric = lyricParser->getLyricByTime(position);
-//     if (!lyric.isEmpty()) {
-//         ui->lyricLabel->setText(lyric);
-
-//         // 可以添加动画效果使歌词平滑切换
-//         QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(ui->lyricLabel);
-//         ui->lyricLabel->setGraphicsEffect(effect);
-
-//         QPropertyAnimation *animation = new QPropertyAnimation(effect, "opacity");
-//         animation->setDuration(200);
-//         animation->setStartValue(0.5);
-//         animation->setEndValue(1.0);
-//         animation->start(QPropertyAnimation::DeleteWhenStopped);
-//     }
-// }
-
 void MainWindow::updateLyric(qint64 position)
 {
     if (!lyricParser->hasLyric()) {
@@ -842,4 +811,19 @@ void MainWindow::updateLyric(qint64 position)
         animation->setEndValue(1.0);
         animation->start();
     }
+}
+
+void MainWindow::initLyricLabel()
+{
+    lyricParser = new LyricParser(this);
+
+    ui->lyricLabel->setStyleSheet("QLabel {"
+                                  "color: white;"
+                                  "font-size: 20px;"
+                                  "font-weight: bold;"
+                                  "background-color: rgba(0, 0, 0);"
+                                  "border-radius: 12px;"
+                                  "padding: 10px;"
+                                  "}");
+    ui->lyricLabel->setAlignment(Qt::AlignCenter);
 }
