@@ -266,11 +266,16 @@ void MainWindow::selectFile()
 
 void MainWindow::loadMusicList(const QString basePath, bool recursive)
 {
-    // 检查目录是否存在
+    // 首先尝试使用 qrc 资源
     QDir dir(basePath);
     if (!dir.exists()) {
-        qDebug() << "Directory does not exist:" << basePath;
-        return;
+        // 如果 qrc 资源不存在，尝试使用安装路径
+        QString installPath = "/usr/share/musicplayer" + basePath.mid(1); // 去掉开头的 ":"
+        dir = QDir(installPath);
+        if (!dir.exists()) {
+            qDebug() << "Directory does not exist:" << basePath << "or" << installPath;
+            return;
+        }
     }
 
     // 设置文件过滤器，只查找指定格式的音频文件
