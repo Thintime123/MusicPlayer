@@ -109,5 +109,7 @@ private:
 
     void loadLyric(const QString &musicFileName); // 加载歌词文件
     void updateLyric(qint64 position); // 更新当前显示的歌词
+
+    void initLyricLabel();
 };
 #endif // MAINWINDOW_H
