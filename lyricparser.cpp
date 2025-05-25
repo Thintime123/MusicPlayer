@@ -16,7 +16,7 @@ bool LyricParser::loadLrcFile(const QString &filePath)
     }
 
     QTextStream in(&file);
-    //in.setCodec("UTF-8");  // 设置编码为UTF-8
+    //in.setCodec("UTF-8");
     QTextStream stream(&file);
     //指定编码
     stream.setEncoding(QStringConverter::Utf8);

@@ -23,7 +23,9 @@ MainWindow::MainWindow(QWidget *parent)
     musicCurIndex = 0;
     basePath = ":/res/Audio";
 
+    // 设置播放模式为顺序播放
     musicCurrentMode = orderMode;
+    playlistManager.setPlayMode(musicCurrentMode); // 直接使用相同类型的枚举
 
     isShowListWidget = false;
     loadMusicList(basePath, true); // 加载音乐列表
@@ -161,17 +163,18 @@ QUrl convertToQrcUrl(const QUrl &fileUrl) {
 void MainWindow::playCurrentMusic() {
     qDebug() << "\nplayCurrentMusic called!";
 
-    if(musicCurIndex >= 0 && musicCurIndex < musicList.size()) {
-        qDebug() << "Playing music:" << musicList[musicCurIndex];
+    if(!playlistManager.isEmpty()) {
+        QUrl currentMusic = playlistManager.getCurrentItem();
+        qDebug() << "Playing music:" << currentMusic;
 
         qDebug() << "Player state(last):" << player->playbackState();
 
-        player->setSource(convertToQrcUrl(musicList[musicCurIndex]));
+        player->setSource(convertToQrcUrl(currentMusic));
         player->play();
         ui->PlayAndPauseBtn->setIcon(QIcon(":/res/Icon/Pause.png"));
 
         // 获取当前音乐文件名（不含路径和扩展名）
-        QString musicFileName = QFileInfo(musicList[musicCurIndex].toString()).baseName();
+        QString musicFileName = QFileInfo(currentMusic.toString()).baseName();
 
         // 加载对应的歌词文件
         loadLyric(musicFileName);
@@ -179,8 +182,11 @@ void MainWindow::playCurrentMusic() {
         discAnimation->stop();
         setCurRotation(0);
         discAnimation->start();
+        
+        // 更新列表控件当前行
+        ui->musicListWidget->setCurrentRow(playlistManager.getCurrentIndex());
     } else {
-        qDebug() << "Invalid music index:" << musicCurIndex;
+        qDebug() << "Playlist is empty!";
     }
 }
 
@@ -234,9 +240,10 @@ void MainWindow::selectFile()
         qDebug() << "relativePath:" << relativePath;
 
         int foundIndex = -1;
+        QList<QUrl> allItems = playlistManager.getAllItems();
 
-        for(int i = 0; i < musicList.size(); i++) {
-            QString temp = musicList[i].path();
+        for(int i = 0; i < allItems.size(); i++) {
+            QString temp = allItems[i].path();
             //qDebug() << "temp_:" << temp;
             if(temp.startsWith(":/")) {
                 temp = temp.mid(2); // 去掉前缀
@@ -247,11 +254,19 @@ void MainWindow::selectFile()
                 break;
             }
         }
-        qDebug() << "找到相对路径:" << relativePath << "在musicList中的索引为:" << foundIndex;
+        qDebug() << "找到相对路径:" << relativePath << "在播放列表中的索引为:" << foundIndex;
 
-        player->setSource(QUrl(filePath));
-        player->play();
-        ui->PlayAndPauseBtn->setIcon(QIcon(":/res/Icon/Pause.png"));
+        if(foundIndex >= 0) {
+            // 如果找到了文件，设置当前索引
+            playlistManager.setCurrentIndex(foundIndex);
+        } else {
+            // 如果没找到，添加到播放列表
+            QUrl url = QUrl::fromLocalFile(filePath);
+            playlistManager.addItem(url);
+            playlistManager.setCurrentIndex(playlistManager.size() - 1);
+        }
+
+        playCurrentMusic();
     }
 }
 
@@ -280,21 +295,19 @@ void MainWindow::loadMusicList(const QString basePath, bool recursive)
     // 获取符合条件的文件列表
     QFileInfoList fileList = dir.entryInfoList();
 
-
-
     for (const QFileInfo &fileInfo : fileList) {
         if (fileInfo.isFile()) {
             QString filePath = fileInfo.absoluteFilePath();
             qDebug() << "Found audio file:" << filePath;
 
-            // 将音乐文件添加到播放列表中
+            // 将音乐文件添加到播放列表管理器中
             QUrl url = QUrl::fromLocalFile(filePath);
-            musicList.append(url);
+            playlistManager.addItem(url);
             qDebug() << "Found audio fileUrl: " << url;
         }
     }
 
-    qDebug() << "The size of musicList(loadMusicList) : " << musicList.size();
+    qDebug() << "The size of playlist: " << playlistManager.size();
 
     if (recursive) {
         // 获取当前目录中的所有子目录（排除.和..）
@@ -304,45 +317,36 @@ void MainWindow::loadMusicList(const QString basePath, bool recursive)
             QString subdirPath = basePath + "/" + subdir;
             loadMusicList(subdirPath, recursive);
         }
-
     }
 }
 
 void MainWindow::playPreview()
 {
-    qDebug() << "playPreview called! List size:" << musicList.size() <<
-        "Current index(last):" << musicCurIndex;
-    if(musicList.isEmpty()) return;
-
-    if(musicCurIndex > 0) {
-        musicCurIndex--;
-    } else {
-        musicCurIndex = musicList.size() - 1;
+    qDebug() << "playPreview called! Playlist size:" << playlistManager.size() <<
+        "Current index:" << playlistManager.getCurrentIndex();
+    
+    if(playlistManager.isEmpty()) {
+        qDebug() << "Playlist is empty!";
+        return;
     }
 
-    qDebug() << "musicCurIndex(now) = " << musicCurIndex;
-
+    // 获取上一个项目并更新当前索引
+    playlistManager.getPreviousItem();
     playCurrentMusic();
 }
 
 void MainWindow::playNext()
 {
-    qDebug() << "playNext called! List size:" << musicList.size() <<
-        "Current index(last):" << musicCurIndex;
+    qDebug() << "playNext called! Playlist size:" << playlistManager.size() <<
+        "Current index:" << playlistManager.getCurrentIndex();
 
-    if(musicList.isEmpty()) {
-        qDebug() << "musicList is empty!";
+    if(playlistManager.isEmpty()) {
+        qDebug() << "Playlist is empty!";
         return;
     }
 
-    if(musicCurIndex < musicList.size() - 1) {
-        musicCurIndex++;
-    } else {
-        musicCurIndex = 0;
-    }
-
-    qDebug() << "musicCurIndex(now) = " << musicCurIndex;
-
+    // 获取下一个项目并更新当前索引
+    playlistManager.getNextItem();
     playCurrentMusic();
 }
 
@@ -350,48 +354,40 @@ void MainWindow::playModeSelect()
 {
     qDebug() << "\nplayModeSelect called!";
 
-    if(musicCurrentMode == orderMode) {
-        musicCurrentMode = randomMode;
-        ui->ModeBtn->setIcon(QIcon(":/res/Icon/Random.png"));
-
-        qDebug() << "musicCurrntMode = randomMode";
-    } else if(musicCurrentMode == randomMode) {
-        musicCurrentMode = loopMode;
-        ui->ModeBtn->setIcon(QIcon(":/res/Icon/Loop.png"));
-
-        qDebug() << "musicCurrntMode = loopMode";
-    } else if(musicCurrentMode == loopMode) {
-        musicCurrentMode = singleMode;
-        ui->ModeBtn->setIcon(QIcon(":/res/Icon/Single.png"));
-
-        qDebug() << "musicCurrntMode = singleMode";
-    } else if(musicCurrentMode == singleMode) {
-        musicCurrentMode = orderMode;
-        ui->ModeBtn->setIcon(QIcon(":/res/Icon/Order.png"));
-
-        qDebug() << "musicCurrntMode = orderMode";
+    // 切换到下一个播放模式并更新图标
+    PlayMode newMode = playlistManager.switchToNextPlayMode();
+    
+    // 同时更新旧的枚举变量以保持一致（为了兼容过渡期间的代码）
+    switch(newMode) {
+        case orderMode:
+            musicCurrentMode = orderMode;
+            ui->ModeBtn->setIcon(QIcon(":/res/Icon/Order.png"));
+            qDebug() << "PlayMode = orderMode";
+            break;
+        case randomMode:
+            musicCurrentMode = randomMode;
+            ui->ModeBtn->setIcon(QIcon(":/res/Icon/Random.png"));
+            qDebug() << "PlayMode = randomMode";
+            break;
+        case loopMode:
+            musicCurrentMode = loopMode;
+            ui->ModeBtn->setIcon(QIcon(":/res/Icon/Loop.png"));
+            qDebug() << "PlayMode = loopMode";
+            break;
+        case singleMode:
+            musicCurrentMode = singleMode;
+            ui->ModeBtn->setIcon(QIcon(":/res/Icon/Single.png"));
+            qDebug() << "PlayMode = singleMode";
+            break;
     }
 }
 
 void MainWindow::playStatusChange(QMediaPlayer::MediaStatus status) {
     if(status == QMediaPlayer::EndOfMedia) {
-        if(musicCurrentMode == orderMode) {
-            if(musicCurIndex < musicList.size() - 1) {
-                playNext();
-            }
-        } else if(musicCurrentMode == randomMode) {
-            int oldIndex = musicCurIndex;
-            do {
-                musicCurIndex = QRandomGenerator::global()->bounded(musicList.size());
-            } while (musicList.size() > 1 && musicCurIndex == oldIndex);
-            playCurrentMusic();
-        } else if(musicCurrentMode == loopMode) {
-            playNext();
-        } else if(musicCurrentMode == singleMode) {
-            playCurrentMusic();
-        }
+        // 使用PlaylistManager处理媒体结束事件
+        playlistManager.handleEndOfMedia();
+        playCurrentMusic();
     }
-    ui->musicListWidget->setCurrentRow(musicCurIndex);
 }
 
 void MainWindow::loadMusicListWidget(const QString& path)
@@ -417,7 +413,7 @@ void MainWindow::loadMusicListWidget(const QString& path)
         ui->musicListWidget->addItem(element.baseName());
     }
 
-    ui->musicListWidget->setCurrentRow(0);
+    ui->musicListWidget->setCurrentRow(playlistManager.getCurrentIndex());
 }
 
 void MainWindow::handleShowListWidget()
@@ -492,8 +488,9 @@ void MainWindow::clickListWidgetItem(int row)
     qDebug() << "列表项被点击，行号:" << row;
     
     // 检查点击的行号是否合法
-    if (row >= 0 && row < musicList.size()) {
-        musicCurIndex = row;
+    if (row >= 0 && row < playlistManager.size()) {
+        // 设置播放列表管理器的当前索引
+        playlistManager.setCurrentIndex(row);
         playCurrentMusic();
     } else {
         qDebug() << "无效的行号:" << row;

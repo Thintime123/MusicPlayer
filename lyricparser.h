@@ -32,7 +32,7 @@ public:
 
     QMap<qint64, QString> getAllLyrics() const { return lyricMap; }
 private:
-    // 存储时间戳(毫秒)和对应的歌词
+    // 存储时间戳(ms)和对应的歌词
     QMap<qint64, QString> lyricMap;
 
     // 存储LRC文件的元信息

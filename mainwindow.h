@@ -15,6 +15,7 @@
 #include <QEvent>
 #include <QMouseEvent>
 #include "lyricparser.h"
+#include "playlistmanager.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -49,8 +50,6 @@ private:
     void loadMusicList(const QString basePath, bool recursive);
     void loadMusicListWidget(const QString& basePath);
 
-
-
 private slots:
     void playAndPause();
     void selectFile();
@@ -67,7 +66,7 @@ private slots:
     void showAnimation(QWidget* window);
     void hideAnimation(QWidget* window);
     
-    void clickListWidgetItem(int row); // 添加处理点击列表项的函数
+    void clickListWidgetItem(int row); // 处理点击列表项
 
     void musicPositonChange();
     void progressBarMoved(int positon);
@@ -85,16 +84,11 @@ private:
     QString filePath;   // 正要播放的音频文件路径
 
     QString basePath;
-    QList<QUrl> musicList; // 音乐列表
-    int musicCurIndex = 0; // 当前音乐索引
+    PlaylistManager<QUrl> playlistManager; // 使用模板类管理播放列表
+    int musicCurIndex = 0; // 当前音乐索引（保留,用于过渡）
 
-    enum musicMode {
-        orderMode,
-        randomMode,
-        loopMode,
-        singleMode
-    };
-    musicMode musicCurrentMode;
+    // 使用全局PlayMode枚举
+    PlayMode musicCurrentMode; // 用于过渡
 
     bool isShowListWidget;
     bool isShowVolumeBar;
@@ -104,10 +98,10 @@ private:
     void initDisc();
 
 private:
-    LyricParser *lyricParser; // 歌词解析器
+    LyricParser *lyricParser;
     QString currentLyricFile; // 当前歌词文件路径
 
-    void loadLyric(const QString &musicFileName); // 加载歌词文件
+    void loadLyric(const QString &musicFileName);
     void updateLyric(qint64 position); // 更新当前显示的歌词
 
     void initLyricLabel();
