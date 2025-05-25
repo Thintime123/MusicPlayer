@@ -28,17 +28,18 @@
 
 ```
 MusicPlayer/
-├── lyricparser.cpp/h   - 歌词解析器实现
-├── mainwindow.cpp/h    - 主窗口界面实现
-├── mainwindow.ui       - UI 设计文件
-├── main.cpp            - 程序入口
-├── MusicPlayer.pro     - 项目配置文件
-├── res/                - 资源文件夹
-│   ├── Audio/          - 音频文件
-│   ├── Background/     - 背景图片
-│   ├── Icon/           - 图标资源
-│   └── Lyrics/         - 歌词文件
-└── res.qrc             - 资源配置文件
+├── lyricparser.cpp/h       - 歌词解析器实现
+├── playlistmanager.cpp/h   - 播放列表管理类模板
+├── mainwindow.cpp/h        - 主窗口界面实现
+├── mainwindow.ui           - UI 设计文件
+├── main.cpp                - 程序入口
+├── MusicPlayer.pro         - 项目配置文件
+├── res/                    - 资源文件夹
+│   ├── Audio/              - 音频文件
+│   ├── Background/         - 背景图片
+│   ├── Icon/               - 图标资源
+│   └── Lyrics/             - 歌词文件
+└── res.qrc                 - 资源配置文件
 ```
 
 ## 编译与运行
